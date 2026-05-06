@@ -1,0 +1,47 @@
+SGYM (Smart Gym Management System).
+
+🏗️ Arquitectura General
+El proyecto sigue una arquitectura MERN Stack desacoplada (Frontend y Backend independientes), diseñada para ser escalable y modular. Se enfoca en la gestión de membresías, control de acceso mediante códigos QR y personalización de rutinas.
+
+🔙 Backend (Node.js + Express + MongoDB)
+1. Tecnologías Clave
+Runtime: Node.js con Express.
+Base de Datos: MongoDB utilizando Mongoose como ODM.
+Seguridad:
+JWT (JSON Web Tokens): Para autenticación y autorización basada en roles.
+Bcrypt: Para el hashing de contraseñas.
+Helmet: Para cabeceras de seguridad HTTP.
+CORS: Configurado para permitir peticiones solo desde el frontend autorizado.
+2. Modelos de Datos (Entidades)
+User: Maneja roles (Admin, Staff, Miembro), estado de membresía y tokens QR temporales.
+Plan: Define los tipos de suscripciones (Básico, Premium, etc.).
+Routine: Almacena el calendario semanal de entrenamiento asociado a cada usuario.
+Exercise: Catálogo de ejercicios con multimedia (videos/imágenes).
+Machine: Estado y disponibilidad de las máquinas del gimnasio.
+AccessLog: Registro histórico de entradas (concedidas o denegadas).
+Payment: Control de transacciones y estados de pago.
+3. Lógica de Negocio Destacada
+Sistema de Acceso QR: Utiliza tokens JWT de corta duración (60s). El servidor genera un token único, lo guarda en el perfil del usuario y lo invalida inmediatamente después del primer escaneo exitoso para evitar duplicación de acceso.
+Control de Roles: Middlewares específicos protegen rutas sensibles, asegurando que solo el Staff pueda gestionar máquinas o que solo Miembros Premium accedan a ciertas rutinas.
+🎨 Frontend (React + Vite + TailwindCSS)
+1. Tecnologías Clave
+Framework: React 18+ gestionado con Vite para una carga ultrarrápida en desarrollo.
+Estilos: TailwindCSS con una estética "Premium Dark Mode" (usando colores como gym-darker y neon-green).
+Estado: React Context API (AuthContext) para manejar la sesión del usuario de forma global.
+Animaciones: Framer Motion para transiciones fluidas y micro-interacciones.
+2. Componentes y Flujos
+Dashboard de Staff: Vista administrativa para gestionar usuarios y monitorear accesos en tiempo real.
+Panel de Cliente: Interfaz personalizada donde el usuario ve su estado de membresía, su código QR dinámico y su progreso.
+Gestión de Rutinas: Un wizard interactivo para configurar el calendario semanal por grupos musculares.
+Servicio de API: Centralizado en api.js usando Axios, con interceptores automáticos para adjuntar el token JWT en cada petición.
+🔍 Análisis de Fortalezas
+Seguridad del QR: La implementación de un token de "un solo uso" con expiración agresiva es muy robusta contra el fraude.
+Modularidad: La separación de rutas y controladores en el backend facilita enormemente el mantenimiento.
+Experiencia de Usuario (UX): El uso de un diseño oscuro con acentos neón le da un aspecto moderno y profesional.
+🚀 Oportunidades de Mejora (Roadmap Técnico)
+Redundancia de Archivos: He detectado que existen carpetas controller/ y controllers/ en el backend. Sería ideal unificar todo en una sola para evitar confusión.
+Optimización de QR: Actualmente, el token QR se guarda en la DB de MongoDB. Para escalabilidad masiva, se podría usar Redis para manejar estos tokens temporales, reduciendo la carga de IO en la base de datos principal.
+Real-Time con WebSockets: Implementar Socket.io para que el Staff vea los accesos en su dashboard instantáneamente sin refrescar, y para actualizar el estado de las máquinas en tiempo real.
+Caché de Ejercicios: El catálogo de ejercicios es mayormente estático; usar caché en el frontend o un CDN para los videos mejoraría la velocidad.
+Testing: Falta una suite de pruebas automatizadas (Jest/Supertest para backend, Vitest/Cypress para frontend) para asegurar que los cambios no rompan el flujo de pagos o acceso.
+TypeScript: Migrar el proyecto a TypeScript añadiría una capa de seguridad en el tipado, evitando errores comunes de "undefined" en las respuestas de la API.
