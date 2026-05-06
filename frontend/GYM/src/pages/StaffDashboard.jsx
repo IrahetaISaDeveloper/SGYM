@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
-import { Users, QrCode, Search, CheckCircle, XCircle, Settings2 } from 'lucide-react';
+import { Users, QrCode, Search, CheckCircle, XCircle, Settings2, Camera } from 'lucide-react';
+import QrScanner from '../components/QrScanner';
 
 const StaffDashboard = () => {
   const [users, setUsers] = useState([]);
@@ -17,6 +18,8 @@ const StaffDashboard = () => {
   // QR Scanner State
   const [qrToken, setQrToken] = useState('');
   const [scanResult, setScanResult] = useState(null);
+  const [showScanner, setShowScanner] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
 
   const [plans, setPlans] = useState([]);
 
@@ -76,14 +79,26 @@ const StaffDashboard = () => {
 
   const handleScanQR = async (e) => {
     e.preventDefault();
+    await validateToken(qrToken);
+  };
+
+  const validateToken = async (token) => {
     setScanResult(null);
+    setIsValidating(true);
     try {
-      const response = await api.post('/api/access/scan', { token: qrToken });
-      setScanResult({ success: true, message: 'Acceso Permitido', data: response.data });
+      const response = await api.post('/api/access/scan', { token });
+      setScanResult({ success: true, message: response.data.message || 'Acceso Permitido', data: response.data });
       setQrToken('');
     } catch (err) {
       setScanResult({ success: false, message: err.response?.data?.message || 'Acceso Denegado' });
+    } finally {
+      setIsValidating(false);
     }
+  };
+
+  const handleCameraResult = async (decoded) => {
+    setShowScanner(false);
+    await validateToken(decoded);
   };
 
   return (
@@ -102,9 +117,19 @@ const StaffDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         {/* QR Scanner Simulator */}
         <div className="bg-gym-card rounded-xl p-6 border border-slate-800 shadow-lg lg:col-span-1">
-          <div className="flex items-center gap-3 mb-6">
-            <QrCode className="text-neon-green h-6 w-6" />
-            <h2 className="text-xl font-bold text-white">Simulador Escáner QR</h2>
+          <div className="flex items-center justify-between gap-3 mb-6">
+            <div className="flex items-center gap-3">
+              <QrCode className="text-neon-green h-6 w-6" />
+              <h2 className="text-xl font-bold text-white">Validar Acceso QR</h2>
+            </div>
+            <button
+              onClick={() => setShowScanner(true)}
+              title="Usar cámara"
+              className="flex items-center gap-2 bg-neon-green/10 hover:bg-neon-green/20 border border-neon-green/30 text-neon-green text-sm px-3 py-1.5 rounded-lg transition-colors"
+            >
+              <Camera className="h-4 w-4" />
+              <span className="hidden sm:inline">Usar Cámara</span>
+            </button>
           </div>
           
           <form onSubmit={handleScanQR} className="space-y-4">
@@ -121,9 +146,10 @@ const StaffDashboard = () => {
             </div>
             <button
               type="submit"
-              className="w-full bg-slate-700 hover:bg-slate-600 text-white font-medium py-2 rounded-md transition-colors"
+              disabled={isValidating}
+              className="w-full flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-60 text-white font-medium py-2 rounded-md transition-colors"
             >
-              Validar Acceso
+              {isValidating ? <><span className="animate-spin">⏳</span> Validando...</> : 'Validar Acceso'}
             </button>
           </form>
 
@@ -248,6 +274,14 @@ const StaffDashboard = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Camera QR Scanner Modal */}
+      {showScanner && (
+        <QrScanner
+          onResult={handleCameraResult}
+          onClose={() => setShowScanner(false)}
+        />
       )}
     </div>
   );
