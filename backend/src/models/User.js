@@ -21,7 +21,9 @@ const userSchema = new mongoose.Schema(
       ref: 'Plan',
     },
     membershipExpiration: { type: Date },
-    qrToken: { type: String },
+    totpSecret: { type: String },
+    currentStreak: { type: Number, default: 0 },
+    lastAccessDate: { type: Date },
   },
   { timestamps: true }
 );

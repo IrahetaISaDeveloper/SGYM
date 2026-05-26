@@ -3,7 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
-
+import { RestTimerProvider } from './context/RestTimerContext';
+import RestTimerFloat from './components/RestTimerFloat';
 // Pages
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -30,6 +31,7 @@ const RootRedirect = () => {
 
 function App() {
   return (
+    <RestTimerProvider>
     <AuthProvider>
       <BrowserRouter>
         <div className="min-h-screen flex flex-col bg-gym-darker">
@@ -81,9 +83,11 @@ function App() {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
+          <RestTimerFloat />
         </div>
       </BrowserRouter>
     </AuthProvider>
+    </RestTimerProvider>
   );
 }
 

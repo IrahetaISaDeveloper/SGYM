@@ -3,8 +3,14 @@ import { QRCodeCanvas } from 'qrcode.react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { AuthContext } from '../context/AuthContext';
-import { CreditCard, ShieldCheck, AlertCircle, RefreshCw, Wrench, CheckCircle2, Star, ChevronRight } from 'lucide-react';
+import { CreditCard, ShieldCheck, AlertCircle, RefreshCw, Wrench, CheckCircle2, Star, ChevronRight, Flame } from 'lucide-react';
 import AccessCalendar from '../components/AccessCalendar';
+import { TOTP, NobleCryptoPlugin, ScureBase32Plugin } from 'otplib';
+
+const totp = new TOTP({
+  crypto: new NobleCryptoPlugin(),
+  base32: new ScureBase32Plugin()
+});
 
 const ClientPanel = () => {
   const { user } = useContext(AuthContext);
@@ -35,15 +41,25 @@ const ClientPanel = () => {
   };
 
   const generateQR = async () => {
-    setLoadingQr(true);
-    try {
-      const response = await api.get('/api/access/generate-qr');
-      setQrToken(response.data.qrToken);
-      setTimeLeft(60);
-    } catch (error) {
-      console.error("Error generating QR", error);
-    } finally {
-      setLoadingQr(false);
+    // We expect profile.totpSecret to exist from the /me or /login endpoints
+    if (profile && profile.totpSecret) {
+      try {
+        const token = await totp.generate({ secret: profile.totpSecret });
+        const payload = JSON.stringify({ id: profile._id, code: token });
+        setQrToken(payload);
+        
+        // Calculate remaining seconds in current 30s window
+        const epoch = Math.floor(Date.now() / 1000);
+        const step = 30;
+        const remainder = epoch % step;
+        setTimeLeft(step - remainder);
+        setLoadingQr(false);
+      } catch (error) {
+        console.error("Error generating TOTP locally", error);
+      }
+    } else {
+      // If we don't have the secret yet, fetch profile to get it
+      fetchProfile();
     }
   };
 
@@ -92,19 +108,30 @@ const ClientPanel = () => {
     fetchMachines();
     fetchLogs();
 
-    const intervalId = setInterval(() => {
-      generateQR();
-    }, 60000); // 60 seconds
+    // Regenerate exactly when the 30s window rolls over
+    const checkIntervalId = setInterval(() => {
+      const epoch = Math.floor(Date.now() / 1000);
+      if (epoch % 30 === 0) {
+        generateQR();
+      }
+    }, 1000);
 
     const countdownId = setInterval(() => {
-      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          // Fallback if interval misses the exact 0 second
+          generateQR();
+          return 30;
+        }
+        return prev - 1;
+      });
     }, 1000);
 
     return () => {
-      clearInterval(intervalId);
+      clearInterval(checkIntervalId);
       clearInterval(countdownId);
     };
-  }, []);
+  }, [profile?.totpSecret]); // re-run when secret is available
 
   const isActive = profile?.membershipStatus === 'Activa' || profile?.membershipStatus === 'active';
 
@@ -115,6 +142,16 @@ const ClientPanel = () => {
           <h1 className="text-2xl font-bold text-white">Mi Perfil</h1>
           <p className="text-slate-400 text-sm">Gestiona tu acceso</p>
         </div>
+        
+        {profile?.currentStreak > 0 && (
+          <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-slate-800/80 border border-orange-500/30">
+            <div className="flex items-center gap-1">
+              <Flame className="h-5 w-5 text-orange-500" />
+              <span className="text-xl font-bold text-white leading-none">{profile.currentStreak}</span>
+            </div>
+            <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-1">Racha</span>
+          </div>
+        )}
       </div>
 
       {/* Status Card */}

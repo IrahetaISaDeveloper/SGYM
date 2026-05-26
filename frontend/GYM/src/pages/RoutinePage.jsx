@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import {
   Calendar, Dumbbell, ChevronRight, Edit3, Save,
-  RotateCcw, Flame, Clock, Target
+  RotateCcw, Flame, Clock, Target, Activity, Plus, Trash2, CheckCircle2
 } from 'lucide-react';
 
 const DAYS = [
@@ -74,6 +74,72 @@ const ExerciseCard = ({ exercise }) => {
   const [expanded, setExpanded] = useState(false);
   const [mediaError, setMediaError] = useState(false);
 
+  // Training Log State
+  const [showLog, setShowLog] = useState(false);
+  const [lastLog, setLastLog] = useState(null);
+  const [sets, setSets] = useState([{ weight: '', reps: '' }]);
+  const [savingLog, setSavingLog] = useState(false);
+  const [logSuccess, setLogSuccess] = useState(false);
+
+  const fetchLastLog = async () => {
+    try {
+      const res = await api.get(`/api/workout-logs/last/${exercise._id}`);
+      if (res.data) setLastLog(res.data);
+    } catch (err) {
+      // Ignorar si no hay registros previos
+    }
+  };
+
+  const handleToggleLog = () => {
+    if (!showLog && !lastLog) {
+      fetchLastLog();
+    }
+    setShowLog(!showLog);
+  };
+
+  const handleSetChange = (index, field, value) => {
+    const newSets = [...sets];
+    newSets[index][field] = value;
+    setSets(newSets);
+  };
+
+  const addSet = () => {
+    setSets([...sets, { weight: '', reps: '' }]);
+  };
+
+  const removeSet = (index) => {
+    const newSets = [...sets];
+    newSets.splice(index, 1);
+    setSets(newSets);
+  };
+
+  const handleSaveLog = async () => {
+    const validSets = sets
+      .filter(s => s.weight !== '' && s.reps !== '')
+      .map(s => ({ weight: Number(s.weight), reps: Number(s.reps) }));
+      
+    if (validSets.length === 0) return alert('Debes completar al menos una serie (peso y reps).');
+    
+    setSavingLog(true);
+    try {
+      await api.post('/api/workout-logs', {
+        exerciseId: exercise._id,
+        sets: validSets
+      });
+      setLogSuccess(true);
+      setTimeout(() => {
+        setLogSuccess(false);
+        setShowLog(false);
+        setSets([{ weight: '', reps: '' }]);
+        fetchLastLog();
+      }, 2000);
+    } catch (err) {
+      alert('Error al guardar registro');
+    } finally {
+      setSavingLog(false);
+    }
+  };
+
   return (
     <div className="bg-gym-card border border-slate-800 rounded-xl overflow-hidden hover:border-slate-700 transition-all">
       <div className="relative bg-slate-900 h-44 flex items-center justify-center overflow-hidden">
@@ -124,6 +190,96 @@ const ExerciseCard = ({ exercise }) => {
         {expanded && (
           <div className="mt-3 bg-slate-800/60 rounded-lg p-3 text-sm text-slate-300 whitespace-pre-line border border-slate-700">
             {exercise.howTo}
+          </div>
+        )}
+        
+        <button
+          onClick={handleToggleLog}
+          className="w-full mt-3 flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white font-medium py-2 rounded-lg transition-colors text-sm border border-slate-700 hover:border-slate-600"
+        >
+          <Activity className="h-4 w-4 text-neon-green" />
+          {showLog ? 'Ocultar Registro' : 'Registrar Entrenamiento'}
+        </button>
+
+        {showLog && (
+          <div className="mt-3 bg-slate-900/80 rounded-xl p-4 border border-neon-green/30">
+            {logSuccess ? (
+              <div className="flex flex-col items-center justify-center py-4 text-neon-green text-center">
+                <CheckCircle2 className="h-8 w-8 mb-2" />
+                <p className="font-bold">¡Registro guardado!</p>
+              </div>
+            ) : (
+              <>
+                {lastLog && (
+                  <div className="mb-4 bg-slate-800 rounded-lg p-3 text-xs border border-slate-700">
+                    <p className="text-slate-400 font-medium mb-2 flex justify-between">
+                      <span>Última vez:</span>
+                      <span>{new Date(lastLog.date).toLocaleDateString()}</span>
+                    </p>
+                    <div className="space-y-1">
+                      {lastLog.sets.map((set, i) => (
+                        <div key={i} className="flex justify-between text-slate-300">
+                          <span>Serie {i + 1}</span>
+                          <span>{set.weight}kg × {set.reps} reps</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="space-y-3 mb-4">
+                  {sets.map((set, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <span className="text-xs text-slate-500 font-bold w-4">{idx + 1}</span>
+                      <div className="flex-1 relative">
+                        <input 
+                          type="number" 
+                          min="0"
+                          placeholder="Peso" 
+                          value={set.weight}
+                          onChange={e => handleSetChange(idx, 'weight', e.target.value)}
+                          className="w-full bg-slate-800 border border-slate-700 rounded-md py-1.5 pl-2 pr-6 text-sm text-white focus:outline-none focus:border-neon-green"
+                        />
+                        <span className="absolute right-2 top-1.5 text-xs text-slate-500">kg</span>
+                      </div>
+                      <div className="flex-1 relative">
+                        <input 
+                          type="number" 
+                          min="1"
+                          placeholder="Reps" 
+                          value={set.reps}
+                          onChange={e => handleSetChange(idx, 'reps', e.target.value)}
+                          className="w-full bg-slate-800 border border-slate-700 rounded-md py-1.5 pl-2 text-sm text-white focus:outline-none focus:border-neon-green"
+                        />
+                      </div>
+                      {sets.length > 1 && (
+                        <button onClick={() => removeSet(idx)} className="text-slate-500 hover:text-red-400 p-1">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="flex gap-2">
+                  <button 
+                    onClick={addSet}
+                    className="flex-1 flex items-center justify-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-2 rounded-lg border border-slate-700"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Añadir Serie
+                  </button>
+                  <button 
+                    onClick={handleSaveLog}
+                    disabled={savingLog}
+                    className="flex-[2] flex items-center justify-center gap-2 bg-neon-green hover:bg-lime-400 text-gym-darker text-sm font-bold py-2 rounded-lg disabled:opacity-50"
+                  >
+                    <Save className="h-4 w-4" />
+                    {savingLog ? 'Guardando...' : 'Guardar Cargas'}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
