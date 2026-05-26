@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @theme {
+  --font-sans: 'Inter', sans-serif;
   --color-neon-green: #ccff00;
   --color-neon-green-dim: rgba(204, 255, 0, 0.2);
   --color-gym-dark: #0f172a;

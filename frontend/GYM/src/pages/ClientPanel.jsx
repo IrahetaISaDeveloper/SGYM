@@ -155,10 +155,10 @@ const ClientPanel = () => {
       </div>
 
       {/* Status Card */}
-      <div className={`rounded-2xl p-6 mb-6 shadow-xl border relative overflow-hidden ${
+      <div className={`rounded-2xl p-6 mb-6 shadow-2xl border relative overflow-hidden backdrop-blur-xl ${
         isActive 
-          ? 'bg-gradient-to-br from-gym-card to-slate-800 border-neon-green/30' 
-          : 'bg-gradient-to-br from-gym-card to-slate-800 border-red-500/30'
+          ? 'bg-gradient-to-br from-gym-card/90 to-slate-900/90 border-neon-green/40' 
+          : 'bg-gradient-to-br from-gym-card/90 to-slate-900/90 border-red-500/40'
       }`}>
         <div className="absolute top-0 right-0 p-4 opacity-10">
           <DumbbellBg className="h-24 w-24" />
@@ -196,7 +196,7 @@ const ClientPanel = () => {
       </div>
 
       {/* QR Section */}
-      <div className="bg-gym-card rounded-2xl p-6 border border-slate-800 shadow-xl flex flex-col items-center">
+      <div className="bg-gym-card/80 backdrop-blur-lg rounded-2xl p-6 border border-slate-700 shadow-2xl flex flex-col items-center">
         <h3 className="text-lg font-bold text-white mb-2">Tu Código de Acceso</h3>
         <p className="text-sm text-slate-400 text-center mb-6">
           Acerca este código al escáner en la entrada para ingresar al gimnasio.

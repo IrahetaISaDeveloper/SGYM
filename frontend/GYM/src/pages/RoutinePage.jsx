@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import {
   Calendar, Dumbbell, ChevronRight, Edit3, Save,
-  RotateCcw, Flame, Clock, Target, Activity, Plus, Trash2, CheckCircle2
+  RotateCcw, Flame, Clock, Target, Activity, Plus, Trash2, CheckCircle2,
+  Heart, ArrowUpToLine, Zap, Moon, Shield
 } from 'lucide-react';
 
 const DAYS = [
@@ -19,8 +20,13 @@ const DAYS = [
 const MUSCLE_GROUPS = ['Descanso', 'Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Abdomen'];
 
 const MUSCLE_ICONS = {
-  Pecho: '🫀', Espalda: '🔙', Piernas: '🦵', Hombros: '🏋️',
-  Brazos: '💪', Abdomen: '⚡', Descanso: '😴',
+  Pecho: <Heart className="inline h-4 w-4" />, 
+  Espalda: <ArrowUpToLine className="inline h-4 w-4" />, 
+  Piernas: <Flame className="inline h-4 w-4" />, 
+  Hombros: <Dumbbell className="inline h-4 w-4" />,
+  Brazos: <Shield className="inline h-4 w-4" />, 
+  Abdomen: <Zap className="inline h-4 w-4" />, 
+  Descanso: <Moon className="inline h-4 w-4" />,
 };
 
 const MUSCLE_COLORS = {
@@ -61,12 +67,19 @@ const toArray = (val) => {
   return [val];
 };
 
-// Helper: get a summary icon string for a day (up to 3 icons)
+// Helper: get a summary icon array for a day
 const getDayIcons = (muscles) => {
   const arr = toArray(muscles);
   const isRest = arr.length === 1 && arr[0] === 'Descanso';
-  if (isRest) return '😴';
-  return arr.filter(m => m !== 'Descanso').map(m => MUSCLE_ICONS[m] || '').join('');
+  if (isRest) return <Moon className="h-5 w-5 mx-auto text-slate-500" />;
+  
+  return (
+    <div className="flex gap-1 justify-center items-center">
+      {arr.filter(m => m !== 'Descanso').map((m, i) => (
+        <span key={i} title={m}>{MUSCLE_ICONS[m]}</span>
+      ))}
+    </div>
+  );
 };
 
 // ─── Exercise Card ─────────────────────────────────────────────────────────────
@@ -159,7 +172,7 @@ const ExerciseCard = ({ exercise }) => {
         <span className={`absolute top-2 right-2 text-xs font-semibold px-2 py-0.5 rounded-full border ${difficultyStyles[exercise.difficulty]}`}>
           {exercise.difficulty}
         </span>
-        <span className={`absolute top-2 left-2 text-xs font-semibold px-2 py-0.5 rounded-full border ${MUSCLE_COLORS[exercise.muscleGroup]}`}>
+        <span className={`absolute top-2 left-2 flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded-full border ${MUSCLE_COLORS[exercise.muscleGroup]}`}>
           {MUSCLE_ICONS[exercise.muscleGroup]} {exercise.muscleGroup}
         </span>
       </div>
@@ -348,7 +361,7 @@ const RoutineEditor = ({ initial, onSave, onCancel }) => {
                   <span className="w-24 text-sm font-bold text-white shrink-0">{day.label}</span>
                   {/* Selected summary badges */}
                   {!isRest && selected.map(mg => (
-                    <span key={mg} className={`text-xs px-2 py-0.5 rounded-full border font-medium ${MUSCLE_COLORS[mg]}`}>
+                    <span key={mg} className={`flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full border font-medium ${MUSCLE_COLORS[mg]}`}>
                       {MUSCLE_ICONS[mg]} {mg}
                     </span>
                   ))}
@@ -367,7 +380,7 @@ const RoutineEditor = ({ initial, onSave, onCancel }) => {
                           : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500'
                       }`}
                     >
-                      {MUSCLE_ICONS[mg]} {mg}
+                      <span className="flex items-center gap-1.5">{MUSCLE_ICONS[mg]} {mg}</span>
                     </button>
                   ))}
                 </div>
@@ -536,7 +549,7 @@ const RoutinePage = () => {
           </h2>
         </div>
         {activeMuscles.filter(m => m !== 'Descanso').map(mg => (
-          <span key={mg} className={`text-sm px-3 py-1 rounded-full border font-semibold ${MUSCLE_COLORS[mg]}`}>
+          <span key={mg} className={`flex items-center gap-2 text-sm px-3 py-1 rounded-full border font-semibold ${MUSCLE_COLORS[mg]}`}>
             {MUSCLE_ICONS[mg]} {mg}
           </span>
         ))}
@@ -546,7 +559,7 @@ const RoutinePage = () => {
       {/* Exercises */}
       {isRestDay ? (
         <div className="text-center py-16">
-          <span className="text-5xl mb-4 block">😴</span>
+          <Moon className="h-16 w-16 mx-auto mb-4 text-slate-500" />
           <h3 className="text-xl font-bold text-white mb-2">Día de Descanso</h3>
           <p className="text-slate-400">El descanso es parte fundamental del progreso. ¡Recupérate!</p>
         </div>

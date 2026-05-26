@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
-import { Users, QrCode, Search, CheckCircle, XCircle, Settings2, Camera, ShoppingBag, Bell } from 'lucide-react';
+import { Users, QrCode, Search, CheckCircle, XCircle, Settings2, Camera, ShoppingBag, Bell, Loader2 } from 'lucide-react';
 import QrScanner from '../components/QrScanner';
 import POSSystem from '../components/POSSystem';
 
@@ -234,7 +234,7 @@ const StaffDashboard = () => {
                 disabled={isValidating}
                 className="w-full flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-60 text-white font-medium py-2 rounded-md transition-colors"
               >
-                {isValidating ? <><span className="animate-spin">⏳</span> Validando...</> : 'Validar Acceso'}
+                {isValidating ? <><Loader2 className="animate-spin inline h-4 w-4 mr-1" /> Validando...</> : 'Validar Acceso'}
               </button>
             </form>
 
@@ -308,7 +308,7 @@ const StaffDashboard = () => {
         <div className="mb-8">
           {shiftLoading ? (
             <div className="text-center py-20 text-slate-500 font-medium">
-              <span className="inline-block animate-pulse text-neon-green">⏳ Cargando estado de la caja...</span>
+              <span className="inline-flex items-center gap-2 animate-pulse text-neon-green"><Loader2 className="h-5 w-5 animate-spin" /> Cargando estado de la caja...</span>
             </div>
           ) : (
             <POSSystem activeShift={activeShift} onShiftChange={setActiveShift} />
